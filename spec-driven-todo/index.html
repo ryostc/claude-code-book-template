@@ -181,7 +181,7 @@
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
   <script type="text/babel">
-    const { useState, useRef } = React;
+    const { useState, useEffect, useRef } = React;
 
     const FILTERS = [
       { key: 'all',    label: 'すべて' },
@@ -195,28 +195,42 @@
       const [filter, setFilter] = useState('all');
       const inputRef = useRef(null);
 
-      function addTask() {
+      useEffect(() => {
+        fetch('/api/tasks').then(r => r.json()).then(setTasks);
+      }, []);
+
+      async function addTask() {
         const text = input.trim();
         if (!text) return;
-        setTasks(prev => [
-          { id: Date.now(), text, done: false },
-          ...prev,
-        ]);
+        const res = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        const task = await res.json();
+        setTasks(prev => [task, ...prev]);
         setInput('');
         inputRef.current.focus();
       }
 
-      function toggleTask(id) {
-        setTasks(prev =>
-          prev.map(t => t.id === id ? { ...t, done: !t.done } : t)
-        );
+      async function toggleTask(id) {
+        const task = tasks.find(t => t.id === id);
+        const res = await fetch(`/api/tasks/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done: !task.done }),
+        });
+        const updated = await res.json();
+        setTasks(prev => prev.map(t => t.id === id ? updated : t));
       }
 
-      function deleteTask(id) {
+      async function deleteTask(id) {
+        await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
         setTasks(prev => prev.filter(t => t.id !== id));
       }
 
-      function clearDone() {
+      async function clearDone() {
+        await fetch('/api/tasks', { method: 'DELETE' });
         setTasks(prev => prev.filter(t => !t.done));
       }
 
