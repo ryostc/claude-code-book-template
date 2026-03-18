@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ブロック崩し</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #1a1a2e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      font-family: 'Segoe UI', sans-serif;
+      color: #eee;
+    }
+    #info {
+      display: flex;
+      gap: 40px;
+      margin-bottom: 12px;
+      font-size: 18px;
+    }
+    canvas {
+      background: #0f0f1a;
+      border: 2px solid #444;
+      border-radius: 4px;
+      display: block;
+    }
+    #message {
+      margin-top: 16px;
+      font-size: 22px;
+      height: 30px;
+      letter-spacing: 1px;
+    }
+    #restart {
+      margin-top: 12px;
+      padding: 8px 24px;
+      font-size: 16px;
+      background: #e94560;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none;
+    }
+    #restart:hover { background: #c73652; }
+  </style>
+</head>
+<body>
+  <div id="info">
+    <span>スコア: <span id="score">0</span></span>
+    <span>ライフ: <span id="lives">3</span></span>
+  </div>
+  <canvas id="canvas" width="480" height="400"></canvas>
+  <div id="message">← → キーまたはマウスで操作</div>
+  <button id="restart" onclick="startGame()">もう一度</button>
+  <script src="main.js"></script>
+</body>
+</html>
