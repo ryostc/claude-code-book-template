@@ -117,6 +117,7 @@ todo done [--note <text>]
 todo stats [--tag <tag>] [--period <days>]
 todo show <id>
 todo delete <id>
+todo backup list
 todo restore <file>
 todo <command> --help
 ```
