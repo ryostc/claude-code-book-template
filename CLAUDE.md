@@ -8,7 +8,7 @@ This is a browser-based Breakout (block-breaking) game written in vanilla HTML/C
 
 ## Running the Game
 
-Open `index.html` directly in a browser, or serve it with any static file server:
+Open `breakout/index.html` directly in a browser, or serve it with any static file server:
 
 ```bash
 npx serve .
@@ -18,8 +18,8 @@ python3 -m http.server
 
 ## Architecture
 
-- `index.html` — game shell: canvas element, score/lives display, CSS styling, loads `main.js`
-- `main.js` — all game logic: game loop (`requestAnimationFrame`), physics, collision detection, input handling
+- `breakout/index.html` — game shell: canvas element, score/lives display, CSS styling, loads `main.js`
+- `breakout/main.js` — all game logic: game loop (`requestAnimationFrame`), physics, collision detection, input handling
 
 ### Game Loop (`main.js`)
 

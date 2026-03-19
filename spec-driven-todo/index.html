@@ -1,0 +1,331 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タスク管理</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      background: #f0f2f5;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 40px 16px;
+    }
+
+    #app { width: 100%; max-width: 520px; }
+
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      color: #1a1a2e;
+      margin-bottom: 24px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .input-row input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .input-row input:focus { border-color: #4a6cf7; }
+
+    .input-row button {
+      padding: 10px 18px;
+      background: #4a6cf7;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      white-space: nowrap;
+    }
+
+    .input-row button:hover { background: #3a5ce6; }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      font-size: 0.85rem;
+      color: #888;
+      margin-bottom: 12px;
+    }
+
+    .stats span strong { color: #1a1a2e; }
+
+    .filter-row {
+      display: flex;
+      gap: 6px;
+    }
+
+    .filter-row button {
+      padding: 6px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 20px;
+      background: #fff;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-row button.active {
+      background: #4a6cf7;
+      border-color: #4a6cf7;
+      color: #fff;
+    }
+
+    .task-list { list-style: none; }
+
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 0;
+      border-bottom: 1px solid #f0f0f0;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .task-item:last-child { border-bottom: none; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .task-item input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      accent-color: #4a6cf7;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .task-text {
+      flex: 1;
+      font-size: 1rem;
+      color: #333;
+      word-break: break-word;
+      transition: all 0.2s;
+    }
+
+    .task-text.done {
+      text-decoration: line-through;
+      color: #aaa;
+    }
+
+    .delete-btn {
+      background: none;
+      border: none;
+      color: #ccc;
+      font-size: 1.2rem;
+      cursor: pointer;
+      padding: 4px 8px;
+      border-radius: 6px;
+      line-height: 1;
+      transition: color 0.15s, background 0.15s;
+      flex-shrink: 0;
+    }
+
+    .delete-btn:hover { color: #e74c3c; background: #fff0ee; }
+
+    .empty {
+      text-align: center;
+      color: #bbb;
+      padding: 32px 0;
+      font-size: 0.95rem;
+    }
+
+    .clear-btn {
+      display: block;
+      width: 100%;
+      margin-top: 12px;
+      padding: 8px;
+      background: none;
+      border: 2px solid #fce4e4;
+      border-radius: 8px;
+      color: #e74c3c;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .clear-btn:hover { background: #fff0ee; }
+  </style>
+</head>
+<body>
+  <div id="app"></div>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+
+    const FILTERS = [
+      { key: 'all',    label: 'すべて' },
+      { key: 'active', label: '未完了' },
+      { key: 'done',   label: '完了済み' },
+    ];
+
+    function App() {
+      const [tasks, setTasks]   = useState([]);
+      const [input, setInput]   = useState('');
+      const [filter, setFilter] = useState('all');
+      const inputRef = useRef(null);
+
+      useEffect(() => {
+        fetch('/api/tasks').then(r => r.json()).then(setTasks);
+      }, []);
+
+      async function addTask() {
+        const text = input.trim();
+        if (!text) return;
+        const res = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text }),
+        });
+        const task = await res.json();
+        setTasks(prev => [task, ...prev]);
+        setInput('');
+        inputRef.current.focus();
+      }
+
+      async function toggleTask(id) {
+        const task = tasks.find(t => t.id === id);
+        const res = await fetch(`/api/tasks/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ done: !task.done }),
+        });
+        const updated = await res.json();
+        setTasks(prev => prev.map(t => t.id === id ? updated : t));
+      }
+
+      async function deleteTask(id) {
+        await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+        setTasks(prev => prev.filter(t => t.id !== id));
+      }
+
+      async function clearDone() {
+        await fetch('/api/tasks', { method: 'DELETE' });
+        setTasks(prev => prev.filter(t => !t.done));
+      }
+
+      const filtered = tasks.filter(t =>
+        filter === 'all'    ? true :
+        filter === 'active' ? !t.done :
+                               t.done
+      );
+
+      const doneCount   = tasks.filter(t => t.done).length;
+      const activeCount = tasks.length - doneCount;
+
+      return (
+        <div>
+          <h1>タスク管理</h1>
+
+          {/* 入力欄 */}
+          <div className="card">
+            <div className="input-row">
+              <input
+                ref={inputRef}
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && addTask()}
+                placeholder="新しいタスクを入力..."
+              />
+              <button onClick={addTask}>追加</button>
+            </div>
+          </div>
+
+          {/* リスト */}
+          <div className="card">
+            {tasks.length > 0 && (
+              <>
+                <div className="stats">
+                  <span>全体: <strong>{tasks.length}</strong></span>
+                  <span>未完了: <strong>{activeCount}</strong></span>
+                  <span>完了: <strong>{doneCount}</strong></span>
+                </div>
+                <div className="filter-row">
+                  {FILTERS.map(f => (
+                    <button
+                      key={f.key}
+                      className={filter === f.key ? 'active' : ''}
+                      onClick={() => setFilter(f.key)}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {filtered.length === 0 ? (
+              <div className="empty">
+                {tasks.length === 0
+                  ? 'タスクがありません。上から追加してください。'
+                  : 'このフィルターに一致するタスクはありません。'}
+              </div>
+            ) : (
+              <ul className="task-list">
+                {filtered.map(task => (
+                  <li key={task.id} className="task-item">
+                    <input
+                      type="checkbox"
+                      checked={task.done}
+                      onChange={() => toggleTask(task.id)}
+                    />
+                    <span className={`task-text${task.done ? ' done' : ''}`}>
+                      {task.text}
+                    </span>
+                    <button
+                      className="delete-btn"
+                      onClick={() => deleteTask(task.id)}
+                      title="削除"
+                    >
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+
+            {doneCount > 0 && (
+              <button className="clear-btn" onClick={clearDone}>
+                完了済みを一括削除 ({doneCount}件)
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('app')).render(<App />);
+  </script>
+</body>
+</html>
